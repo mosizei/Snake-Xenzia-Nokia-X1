@@ -3,7 +3,9 @@ import torch.optim as optim
 from torch.distributions import Categorical
 import numpy as np
 from snake_game.model import a2c_net
-from snake_game.main import main, get_game_state
+from snake_game.main import main, get_game_state, SCREEN_WIDTH, SCREEN_HEIGHT, BLOCK_SIZE
+from snake_game.snake import Snake
+from snake_game.food import Food
 import pandas as pd
 from collections import deque
 import random
@@ -53,24 +55,10 @@ def train():
     in_channels = 3
     num_actions = 4
 
-    # Adjust grid_size in the model based on the actual game grid
     grid_width = SCREEN_WIDTH // BLOCK_SIZE
     grid_height = SCREEN_HEIGHT // BLOCK_SIZE
 
-    # We need to pass the correct grid size to the model
-    # Let's assume the model is adapted to take grid dimensions
-    # Re-defining the model to accept grid dimensions
-    class a2c_net_dynamic(a2c_net):
-        def __init__(self, in_channels, num_actions, grid_height, grid_width):
-            super().__init__(in_channels, num_actions)
-            # Override the flattened size calculation
-            self.fc_input_size = 32 * grid_height * grid_width
-            self.fc1 = nn.Linear(self.fc_input_size, 256)
-            # Re-initialize final layers to use the new fc1
-            self.actor = nn.Linear(256, num_actions)
-            self.critic = nn.Linear(256, 1)
-
-    model = a2c_net_dynamic(in_channels, num_actions, grid_height, grid_width)
+    model = a2c_net(in_channels, num_actions, grid_height, grid_width)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     episode_rewards = []
@@ -133,18 +121,4 @@ def train():
     print("Training log saved to training_log.csv")
 
 if __name__ == '__main__':
-    # Add screen dimensions to be accessible by the env
-    from snake_game.main import SCREEN_WIDTH, SCREEN_HEIGHT, BLOCK_SIZE
-    from snake_game.snake import Snake
-    from snake_game.food import Food
-
-    # Make them global for the env class to use
-    globals().update({
-        'SCREEN_WIDTH': SCREEN_WIDTH,
-        'SCREEN_HEIGHT': SCREEN_HEIGHT,
-        'BLOCK_SIZE': BLOCK_SIZE,
-        'Snake': Snake,
-        'Food': Food
-    })
-
     train()
