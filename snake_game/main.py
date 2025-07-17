@@ -10,33 +10,43 @@ SCREEN_HEIGHT = 480
 BLOCK_SIZE = 10
 
 def get_game_state(snake, food, screen_width, screen_height, block_size):
-    # The state is a 3-channel image:
-    # 1. Food location
-    # 2. Snake head location
-    # 3. Snake body location
-
-    grid_width = screen_width // block_size
-    grid_height = screen_height // block_size
-
-    state = np.zeros((3, grid_height, grid_width), dtype=np.float32)
-
-    # Channel 1: Food location
-    food_x, food_y = food.position
-    if 0 <= food_x < screen_width and 0 <= food_y < screen_height:
-        state[0, int(food_y // block_size), int(food_x // block_size)] = 1
-
-    # Channel 2: Snake head
     head_x, head_y = snake.get_head_position()
-    if 0 <= head_x < screen_width and 0 <= head_y < screen_height:
-        state[1, int(head_y // block_size), int(head_x // block_size)] = 1
 
-    # Channel 3: Snake body
-    for part in snake.body[1:]:
-        part_x, part_y = part
-        if 0 <= part_x < screen_width and 0 <= part_y < screen_height:
-            state[2, int(part_y // block_size), int(part_x // block_size)] = 1
+    # Distances to walls
+    dist_wall_up = head_y
+    dist_wall_down = screen_height - head_y
+    dist_wall_left = head_x
+    dist_wall_right = screen_width - head_x
 
-    return state
+    # Relative position of food
+    food_rel_x = head_x - food.position[0]
+    food_rel_y = head_y - food.position[1]
+
+    # Snake's direction (one-hot encoded)
+    dir_up = 1 if snake.direction == "UP" else 0
+    dir_down = 1 if snake.direction == "DOWN" else 0
+    dir_left = 1 if snake.direction == "LEFT" else 0
+    dir_right = 1 if snake.direction == "RIGHT" else 0
+
+    # Dangers in 8 directions
+    danger_up = 1 if (head_x, head_y - block_size) in snake.body or head_y - block_size < 0 else 0
+    danger_down = 1 if (head_x, head_y + block_size) in snake.body or head_y + block_size >= screen_height else 0
+    danger_left = 1 if (head_x - block_size, head_y) in snake.body or head_x - block_size < 0 else 0
+    danger_right = 1 if (head_x + block_size, head_y) in snake.body or head_x + block_size >= screen_width else 0
+    danger_up_left = 1 if (head_x - block_size, head_y - block_size) in snake.body or head_y - block_size < 0 or head_x - block_size < 0 else 0
+    danger_up_right = 1 if (head_x + block_size, head_y - block_size) in snake.body or head_y - block_size < 0 or head_x + block_size >= screen_width else 0
+    danger_down_left = 1 if (head_x - block_size, head_y + block_size) in snake.body or head_y + block_size >= screen_height or head_x - block_size < 0 else 0
+    danger_down_right = 1 if (head_x + block_size, head_y + block_size) in snake.body or head_y + block_size >= screen_height or head_x + block_size >= screen_width else 0
+
+    state = [
+        dist_wall_up, dist_wall_down, dist_wall_left, dist_wall_right,
+        food_rel_x, food_rel_y,
+        dir_up, dir_down, dir_left, dir_right,
+        danger_up, danger_down, danger_left, danger_right,
+        danger_up_left, danger_up_right, danger_down_left, danger_down_right
+    ]
+
+    return np.array(state, dtype=np.float32)
 
 def main(headless=False, get_state_func=None, action_queue=None):
     pygame.init()

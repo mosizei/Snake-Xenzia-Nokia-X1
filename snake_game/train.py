@@ -52,13 +52,10 @@ class SnakeEnv:
 
 def train():
     env = SnakeEnv()
-    in_channels = 3
+    input_size = 18  # The size of the new state vector
     num_actions = 4
 
-    grid_width = SCREEN_WIDTH // BLOCK_SIZE
-    grid_height = SCREEN_HEIGHT // BLOCK_SIZE
-
-    model = a2c_net(in_channels, num_actions, grid_height, grid_width)
+    model = a2c_net(input_size, num_actions)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     episode_rewards = []
