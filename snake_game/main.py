@@ -22,16 +22,19 @@ def get_game_state(snake, food, screen_width, screen_height, block_size):
 
     # Channel 1: Food location
     food_x, food_y = food.position
-    state[0, int(food_y // block_size), int(food_x // block_size)] = 1
+    if 0 <= food_x < screen_width and 0 <= food_y < screen_height:
+        state[0, int(food_y // block_size), int(food_x // block_size)] = 1
 
     # Channel 2: Snake head
     head_x, head_y = snake.get_head_position()
-    state[1, int(head_y // block_size), int(head_x // block_size)] = 1
+    if 0 <= head_x < screen_width and 0 <= head_y < screen_height:
+        state[1, int(head_y // block_size), int(head_x // block_size)] = 1
 
     # Channel 3: Snake body
     for part in snake.body[1:]:
         part_x, part_y = part
-        state[2, int(part_y // block_size), int(part_x // block_size)] = 1
+        if 0 <= part_x < screen_width and 0 <= part_y < screen_height:
+            state[2, int(part_y // block_size), int(part_x // block_size)] = 1
 
     return state
 
